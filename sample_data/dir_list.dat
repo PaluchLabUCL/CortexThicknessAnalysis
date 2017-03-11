@@ -1,0 +1,4 @@
+sub_dir                                                                                px_size        category                                      ch_actin    sigma_actin    
+2013-09-11_HeLa_wt_gfp-actin_mCry_CAAX_BFP_stk_8bit_corrected_v3_0                     0.0689988      Actin/CAAX_wtTDS_BFP                          1           0.119          
+2013-09-11_HeLa_wt_gfp-actin_mCry_CAAX_C_stk_8bit_corrected_v3_0                       0.0689988      Actin/CAAX_wtTDS                              1           0.119
+2014-05-28_BFP-CAAX_EGFP-Actin_stk_8bit_corrected_v3_0                                 0.0689988      CAAX/Actin_BFP/mCry_wtTDS                     2           0.115
