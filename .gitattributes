@@ -1,1 +1,2 @@
-*.rb linguist-language=Python
+sample_data/* linguist-documentation=false
+*.tif linguist-documentation=false
