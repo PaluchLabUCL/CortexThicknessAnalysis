@@ -1,2 +1,2 @@
-sample_data/* linguist-documentation=false
-*.tif linguist-documentation=false
+sample_data/* linguist-documentation
+*.tif linguist-documentation
