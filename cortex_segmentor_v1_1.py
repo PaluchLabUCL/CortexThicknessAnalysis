@@ -27,10 +27,9 @@ import math
 import numpy as np
 from scipy.optimize import leastsq
 from Tkinter import *
-from PIL import Image, ImageDraw, ImageChops
-from PIL import ImageTk
+from PIL import Image, ImageTk
 from tkFileDialog import *
-import pylab
+import matplotlib.pyplot as plt
 
 def fitfunc(p,phi):
     """Fourier series to fit the segmentation contour to the selected fitpoints."""
@@ -149,8 +148,7 @@ class Experiment:
             
         else:
             return 0
-               
-               
+
 class App:
     """A class for the GUI"""
 
@@ -364,7 +362,7 @@ class App:
         phiend = float(self.phiend.get())
          
         for layer in range(0,self.cell.no_stacks):
-            self.cell.linescan_pars[layer] = [phistart,phiend,outer,inner]
+            self.cell.linescan_pars[layer] = [phistart, phiend, outer, inner]
     
     def seek(self,layer):
         """Seeks image and segmentation/linescan data to a specific layer (slice)
@@ -664,7 +662,7 @@ class App:
             
             self.cell.fit_points[self.cell.current_layer] = []
             
-            #gets a sorted list of pixel intensities
+            #get a sorted list of pixel intensities
             intensities  = []
             for i in range(0,self.cell.size_x,1):
                 for k in range(0,self.cell.size_y,1):
@@ -678,7 +676,7 @@ class App:
             self.draw()  
             self.display.update_idletasks()
 
-            #sequntially and progressively deletes fit points that are far away from the fit
+            #sequentially and progressively deletes fit points that are far away from the fit
             algorithm = [[-1,4,25],
                          [1,4,25],
                          [-1,4,10],
@@ -808,8 +806,8 @@ class App:
     def openfile(self):
         """Opens image file"""
 
-        image_file = askopenfilename(filetypes=[("tif", "*.tif")],initialdir=self.cell.directory)
-        self.cell  = Experiment(image_file)
+        image_file = askopenfilename(filetypes=[("tif", "*.tif")], initialdir=self.cell.directory)
+        self.cell = Experiment(image_file)
       
         outer = self.cell.linescan_pars[self.cell.current_layer][2]
         inner = self.cell.linescan_pars[self.cell.current_layer][3]
@@ -839,7 +837,6 @@ class App:
        self.cell.change_fit_points(event.x,event.y,1,radius)
        self.draw()
        #print 'clicked to add at', event.x, event.y
-
 
     def remove_fit_points(self,event):
        """Adds fit point to current mouse location
@@ -929,7 +926,7 @@ class App:
 
         self.draw()
 
-        length = 30
+        #length = 30
 
         il = float(self.innerlength.get())
         ol = float(self.outerlength.get())
@@ -1190,9 +1187,9 @@ class App:
             # ofile.close()
                
             #displays the average linescans from the stack together
-            pylab.plot(range(int(-inner),int(outer)+1,1),averages)
+            plt.plot(range(int(-inner),int(outer)+1,1),averages)
 
-        pylab.show()
+        plt.show()
 
 def main():
     """Starts the program by opening an application window with a default start image"""
@@ -1200,7 +1197,6 @@ def main():
     master = Tk()
     master.resizable(width=0, height=0)
     master.title(string=sys.argv[0][:-3].split("/")[-1])
-
     app = App(master)
     mainloop()
 
