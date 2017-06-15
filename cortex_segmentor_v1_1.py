@@ -106,8 +106,6 @@ class Experiment:
         if image.mode=='RGB' or image.mode=='CMYK':
             image = image.convert(mode='L')
         intensities = np.asarray(image)
-        print intensities
-        print intensities.shape
         return intensities
 
 
