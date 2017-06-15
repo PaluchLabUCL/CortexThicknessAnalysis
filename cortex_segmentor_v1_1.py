@@ -106,8 +106,9 @@ class Experiment:
         if image.mode=='RGB' or image.mode=='CMYK':
             image = image.convert(mode='L')
         intensities = np.asarray(image)
+        intensities = np.rot90(intensities)
+        intensities = np.flipud(intensities)
         return intensities
-
 
     def change_fit_points(self,xindex,yindex,fit_toggle,radius=2):
         """Adds or removes fit points from the image
@@ -653,7 +654,7 @@ class App:
         for layer in layers:
              
             self.cell.seek(layer)
-            
+
             current_modes  = self.segmentmodes.get()
             self.segmentmodes.delete(0,END)
             self.segmentmodes.insert(0,"4")
