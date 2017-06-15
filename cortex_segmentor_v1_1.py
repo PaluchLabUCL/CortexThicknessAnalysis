@@ -139,8 +139,8 @@ class Experiment:
             layer (int): desired layer to make current
 
         """
-         
-        if layer>=0 and layer<self.no_stacks:
+
+        if self.no_stacks>1 and layer>=0 and layer<self.no_stacks:
             self.cellimage.seek(layer)
             self.cellimagematrix = self.get_intensities(self.cellimage)
             self.current_layer = layer
@@ -650,9 +650,10 @@ class App:
        
         layers = self.generate_framelist()
 
+
         #loops through the layers to be processed and performs the automated fit point selection
         for layer in layers:
-             
+
             self.cell.seek(layer)
 
             current_modes  = self.segmentmodes.get()
