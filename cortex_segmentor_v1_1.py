@@ -23,7 +23,11 @@ Classes:
 
 import os
 import math
+from sys import platform
 
+if platform == "darwin": #default backend has problems on anaconda build of Tk/Tcl
+    import matplotlib
+    matplotlib.use("Tkagg")
 import numpy as np
 from scipy.optimize import leastsq
 from tkinter import *
@@ -66,13 +70,12 @@ class Experiment:
         self.segmentation = ""
         self.directory = os.path.dirname(file)
         self.cellimage  = Image.open(self.filename)
-        self.cellimagematrix = self.cellimage.load()
+        self.no_stacks = self.cellimage.n_frames
+        self.cellimagematrix = self.get_intensities(self.cellimage)
         self.size_x = self.cellimage.size[0]
         self.size_y = self.cellimage.size[1]
         self.no_pixels = self.size_x*self.size_y
-        self.no_stacks = self.countstacks(self.cellimage)
 
-        self.cellimage.seek(0)
         self.current_layer = 0
 
         self.fit_x = []
@@ -89,28 +92,24 @@ class Experiment:
             self.outline_pixel_list.append([])
             self.linescan_pars.append([0,360,50,50])
 
-    def countstacks(self,image):
-        """Counts the number of slices in the image.
+    def get_intensities(self,image):
+        """Returns an array of pixel values for the current image. Note that RGB images
+        are converted to black and white to get the pixel values
 
         Args:
-            image (PIL Image): image to be counted
+            image (PIL.Image class): the image (at current active slice if multi-frame)
 
         Returns:
-            stack_counter (int): number of slices in the image stack
+            intensities (numpy Array): the 2D array of pixel values
 
         """
-         
-        stack_counter = 0
-        eof_indicator = 0
-         
-        while eof_indicator!=1:
-            try:
-                image.seek(stack_counter)
-                stack_counter += 1
-            except EOFError:
-                  eof_indicator = 1
-         
-        return stack_counter
+
+        if image.mode=='RGB' or image.mode=='CMYK':
+            image = image.convert(mode='L')
+        intensities = np.asarray(image)
+        intensities = np.rot90(intensities)
+        intensities = np.flipud(intensities)
+        return intensities
 
     def change_fit_points(self,xindex,yindex,fit_toggle,radius=2):
         """Adds or removes fit points from the image
@@ -141,10 +140,10 @@ class Experiment:
             layer (int): desired layer to make current
 
         """
-         
-        if layer>=0 and layer<self.no_stacks:
+
+        if self.no_stacks>1 and layer>=0 and layer<self.no_stacks:
             self.cellimage.seek(layer)
-            self.cellimagematrix = self.cellimage.load()
+            self.cellimagematrix = self.get_intensities(self.cellimage)
             self.current_layer = layer
             
         else:
@@ -230,7 +229,7 @@ class App:
            self.line_scan_labels[i].append(Label(self.frame,text=self.line_scan_labels[i][0]))
            self.line_scan_labels[i][1].grid(row=50+i,column=0)
         
-        self.copylinescanbutton = Button(self.frame, text="Copy to all",command = self.copy_linescan_parameters,width=6)
+        self.copylinescanbutton = Button(self.frame, text="Copy to all",command = self.copy_linescan_parameters,width=7)
         self.copylinescanbutton.grid(row = 50,column=2)
         
         self.linescanbutton = Button(self.frame, text="Linescan",command = self.linescan,width=15)
@@ -652,11 +651,12 @@ class App:
        
         layers = self.generate_framelist()
 
+
         #loops through the layers to be processed and performs the automated fit point selection
         for layer in layers:
-             
+
             self.cell.seek(layer)
-            
+
             current_modes  = self.segmentmodes.get()
             self.segmentmodes.delete(0,END)
             self.segmentmodes.insert(0,"4")
