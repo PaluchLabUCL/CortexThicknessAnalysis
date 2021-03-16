@@ -6,7 +6,7 @@ Cortex thickness analysis is performed in two steps:
 
 ##  Dependencies
 
-* [Python](www.python.org) written and tested in 2.7, untested in 3+
+* [Python](www.python.org) written and tested in 2.7, updated to work on 3.X
 * [Numpy](www.numpy.org)
 * [Scipy](www.scipy.org)
 * [Matplotlib](www.matplotlib.org)
