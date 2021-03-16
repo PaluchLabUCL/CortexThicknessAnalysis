@@ -82,7 +82,7 @@ def save_data_array(array, save_path):
     for i in range(len(array)):
         for j in range(len(array[i])):
 
-            element = string.ljust(str(array[i][j]), column_width_list[j])
+            element = str(array[i][j]).ljust(column_width_list[j])
             ofile.write(element + '  ')
 
         ofile.write('\n')

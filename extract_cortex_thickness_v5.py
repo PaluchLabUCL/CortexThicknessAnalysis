@@ -57,9 +57,11 @@ These parameters are defined above.
 import os
 import math
 from copy import deepcopy
-from Tkinter import *
-from tkFileDialog import *
-from tkSimpleDialog import *
+from tkinter import *
+from tkinter.filedialog import *
+from tkinter.simpledialog import *
+
+root = Tk()
 
 import scipy
 from scipy import optimize, stats
@@ -144,8 +146,8 @@ class Linescan():
 
         """
         #populate linescan position/intensity
-        self.x = np.array(map(float,x)) #position list as NumPy array of floats
-        self.i = np.array(map(float,i)) #intensity list as NumPy array of floats
+        self.x = np.array(x,dtype='float') #position list as NumPy array of floats
+        self.i = np.array(i,dtype='float') #intensity list as NumPy array of floats
 
         #detminere a few easy parameters from position/intensity
         self.H = self.x[-1] - self.x[0]
@@ -191,12 +193,12 @@ class Linescan():
         """
 
         #restricts fitting to near the center of the linescan
-        self.max_idx = np.argmax(self.i[len(self.i)/2-6:len(self.i)/2+20]) + len(self.i)/2-6
-        self.x_fit = self.x[self.max_idx-2:self.max_idx+3]
-        self.i_fit = self.i[self.max_idx-2:self.max_idx+3]
+        self.max_idx = int(np.argmax(self.i[int(len(self.i)/2-6):int(len(self.i)/2+20)]) + len(self.i)/2-6)
+        self.x_fit = self.x[int(self.max_idx-2):int(self.max_idx+3)]
+        self.i_fit = self.i[int(self.max_idx-2):int(self.max_idx+3)]
 
         #picks reasonable starting values for fit
-        self.i_in_guess = np.mean(self.i[:self.max_idx-14])
+        self.i_in_guess = np.mean(self.i[:int(self.max_idx-14)])
         a = (self.i[self.max_idx] - self.i_in_guess) / 2.4
         sigma = 0.170
         mu = self.x[self.max_idx]
@@ -271,7 +273,7 @@ class Linescan():
 
         #determines half-max
         hm = (self.i_in + self.i_peak) / 2.
-        # print hm
+        # print(hm)
 
         # finds points closest to hm to the left of the peak
         search = self.i[:self.max_idx]
@@ -619,7 +621,7 @@ def analyze_cortex(file_ch1,file_ch2,px_size,ch_actin,sigma_actin):
     x = deepcopy(x_ch1) #the x values should be the same for both linescans!
 
     basename = file_ch1.split('/')[-1][:-4]
-    print 'Analyzing file pair for:', basename
+    print('Analyzing file pair for:', basename)
 
     # extracts data
     actin = Linescan(x,i_ch1)
@@ -633,7 +635,7 @@ def analyze_cortex(file_ch1,file_ch2,px_size,ch_actin,sigma_actin):
     else:
         raise ValueError("Please specify ch_actin as <<1>> or <<2>> for %s!"%file_ch1)
 
-    print 'h =', cortex.h
+    print('h =', cortex.h)
     return cortex
 
 def analyze_ls_pair(file_ch1,file_ch2,px_size,ch_actin,sigma_actin,version):
@@ -714,13 +716,13 @@ def analyze_dir(data_dir,px_size,category,ch_actin,sigma_actin,version):
     linescan_list = [x for x in os.listdir(data_dir) if 'average.dat' in x]
 
     for _ in linescan_list:
-        print _
-        print re.search('frame' + '_([0-9]+)_', _).group(1)
+        print(_)
+        print(re.search('frame' + '_([0-9]+)_', _).group(1))
     linescan_list = sort_ls_list(linescan_list)
 
 
     #extracts linescan parameters and thickness/density
-    for i in range(len(linescan_list)/2):
+    for i in range(int(len(linescan_list)/2)):
 
         file_ch1 = data_dir + '/' + linescan_list[2*i]
         file_ch2 = data_dir + '/' + linescan_list[2*i + 1]
@@ -755,7 +757,7 @@ def main():
     version = '5'
 
     #set up root for asking questions
-    root = Tk()
+    # root = Tk() #moved this up to the imports
     root.withdraw()
 
     #chooses analysis mode
@@ -784,7 +786,8 @@ def main():
 
     if mode==2:
 
-        parent_dir = askdirectory(title='Select the parent directory (be sure it contains dir_list.dat!)')
+        parent_dir = askdirectory(title='Select the parent directory (be sure it contains dir_list.dat!)',
+                                  initialdir=os.path.split(os.path.realpath(__file__))[0])
         # parent_dir = './test_data'
         dir_list = uf.get_dict_list(uf.read_file(parent_dir + '/dir_list.dat'))
 
@@ -797,7 +800,7 @@ def main():
             sigma_actin = float(line['sigma_actin'])
             data_dir = parent_dir + '/' + sub_dir
 
-            print data_dir
+            print(data_dir)
 
             analyze_dir(data_dir,px_size,category,ch_actin,sigma_actin,version)
 

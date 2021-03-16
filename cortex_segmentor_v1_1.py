@@ -26,9 +26,10 @@ import math
 
 import numpy as np
 from scipy.optimize import leastsq
-from Tkinter import *
+from tkinter import *
+from tkinter.filedialog import *
+master = Tk()
 from PIL import Image, ImageTk
-from tkFileDialog import *
 import matplotlib.pyplot as plt
 
 def fitfunc(p,phi):
@@ -434,7 +435,7 @@ class App:
             else:
                 layers = [0]
                       
-        print "Layers to work on:",layers
+        print("Layers to work on:",layers)
         return layers
             
     def copysegmentation(self):
@@ -836,7 +837,7 @@ class App:
        radius = int(self.resetradius.get())
        self.cell.change_fit_points(event.x,event.y,1,radius)
        self.draw()
-       #print 'clicked to add at', event.x, event.y
+       #print('clicked to add at', event.x, event.y)
 
     def remove_fit_points(self,event):
        """Adds fit point to current mouse location
@@ -848,7 +849,7 @@ class App:
        radius = int(self.resetradius.get())
        self.cell.change_fit_points(event.x,event.y,0,radius)
        self.draw()
-       #print 'clicked to remove at', event.x, event.y
+       #print('clicked to remove at', event.x, event.y)
 
     def segment(self,mode):
         """Fits and draws a segmentation contour based on current fit points
@@ -1084,7 +1085,7 @@ class App:
                             pixels[i][step] = grey_level
                            
                         except IndexError:
-                            print "Linescan pixel out of image"
+                            print("Linescan pixel out of image")
 
                     #gets intensity values for inner linescan (by linear interpolation)
                     for step in range(0,outersteps+1,1):
@@ -1112,10 +1113,10 @@ class App:
                            pixels[i][step+innersteps] = grey_level
 
                         except IndexError:
-                           print "Linescan pixel out of image."
+                           print("Linescan pixel out of image.")
 
                     #fills in average linescan, unrolled image/matrix for the first index
-                    av =  float(np.sum(pixels[i][0:steps_per_pixel/2]))/float(steps_per_pixel/2)
+                    av =  float(np.sum(pixels[i][0:int(steps_per_pixel/2)]))/float(steps_per_pixel/2)
                     unrolled_image.putpixel((i,0),(int(av),int(av),int(av)))
                     unrolled_matrix[i,0] = av
                     averages[0] += av
@@ -1128,7 +1129,7 @@ class App:
                         unrolled_matrix[i,int(block)]=av
                         averages[int(block)] += av
                            
-                    av = float(np.sum(pixels[i][-steps_per_pixel/2:]))/float(steps_per_pixel/2)
+                    av = float(np.sum(pixels[i][int(-steps_per_pixel/2):]))/float(steps_per_pixel/2)
                     averages[int(inner)+int(outer)] += av
 
                     avpixel += pixels[i]
@@ -1150,7 +1151,7 @@ class App:
 
             #saves average linescan
             ofile_name = self.cell.directory+"/"+self.cell.filename.split("/")[-1][:-4]+"_frame_%i_linescan_%i_%i_%i_%i_average.dat"%(self.cell.current_layer,phistart,phiend,outer,inner)
-            print "Data written to %s!"%ofile_name
+            print("Data written to %s!"%ofile_name)
             ofile = open(ofile_name,"w")
             for pixel in range(0,int(inner+outer),1):
                 ofile.write("%i %f\n"%(pixel,averages[pixel]))
@@ -1158,7 +1159,7 @@ class App:
 
             #saves all linescans together
             ofile_name = self.cell.directory+"/"+self.cell.filename.split("/")[-1][:-4]+"_frame_%i_linescan_%i_%i_%i_%i_all_linescans.dat"%(self.cell.current_layer,phistart,phiend,outer,inner)
-            print "Data written to %s!"%ofile_name
+            print("Data written to %s!"%ofile_name)
             ofile = open(ofile_name,"w")
             #unrolled_matrix = unrolled_image.load()
             for pixel in range(0,int(inner+outer),1):
@@ -1177,7 +1178,7 @@ class App:
 
             # #saves all linescans together (high spatial resolution)
             # ofile_name = self.cell.directory+"/"+self.cell.filename.split("/")[-1][:-4]+"_frame_%i_linescan_%i_%i_%i_%i_all_linescans_fine.dat"%(self.cell.current_layer,phistart,phiend,outer,inner)
-            # print "Data written to %s!"%ofile_name
+            # print("Data written to %s!"%ofile_name)
             # ofile = open(ofile_name,"w")
             # for pixel in range(0,int(innersteps+outersteps),1):
             #     ofile.write("%f "%pixel)
@@ -1194,11 +1195,14 @@ class App:
 def main():
     """Starts the program by opening an application window with a default start image"""
 
-    master = Tk()
+    # master = Tk() #moved this up to the imports
     master.resizable(width=0, height=0)
     master.title(string=sys.argv[0][:-3].split("/")[-1])
     app = App(master)
     mainloop()
+
+    #closes the program when the window is closed
+    sys.exit()
 
 if __name__=="__main__":
 
