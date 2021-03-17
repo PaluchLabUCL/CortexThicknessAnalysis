@@ -23,11 +23,7 @@ Classes:
 
 import os
 import math
-from sys import platform
 
-if platform == "darwin": #default backend has problems on anaconda build of Tk/Tcl
-    import matplotlib
-    matplotlib.use("Tkagg")
 import numpy as np
 from scipy.optimize import leastsq
 from tkinter import *
@@ -70,12 +66,13 @@ class Experiment:
         self.segmentation = ""
         self.directory = os.path.dirname(file)
         self.cellimage  = Image.open(self.filename)
-        self.no_stacks = self.cellimage.n_frames
-        self.cellimagematrix = self.get_intensities(self.cellimage)
+        self.cellimagematrix = self.cellimage.load()
         self.size_x = self.cellimage.size[0]
         self.size_y = self.cellimage.size[1]
         self.no_pixels = self.size_x*self.size_y
+        self.no_stacks = self.countstacks(self.cellimage)
 
+        self.cellimage.seek(0)
         self.current_layer = 0
 
         self.fit_x = []
@@ -92,24 +89,28 @@ class Experiment:
             self.outline_pixel_list.append([])
             self.linescan_pars.append([0,360,50,50])
 
-    def get_intensities(self,image):
-        """Returns an array of pixel values for the current image. Note that RGB images
-        are converted to black and white to get the pixel values
+    def countstacks(self,image):
+        """Counts the number of slices in the image.
 
         Args:
-            image (PIL.Image class): the image (at current active slice if multi-frame)
+            image (PIL Image): image to be counted
 
         Returns:
-            intensities (numpy Array): the 2D array of pixel values
+            stack_counter (int): number of slices in the image stack
 
         """
-
-        if image.mode=='RGB' or image.mode=='CMYK':
-            image = image.convert(mode='L')
-        intensities = np.asarray(image)
-        intensities = np.rot90(intensities)
-        intensities = np.flipud(intensities)
-        return intensities
+         
+        stack_counter = 0
+        eof_indicator = 0
+         
+        while eof_indicator!=1:
+            try:
+                image.seek(stack_counter)
+                stack_counter += 1
+            except EOFError:
+                  eof_indicator = 1
+         
+        return stack_counter
 
     def change_fit_points(self,xindex,yindex,fit_toggle,radius=2):
         """Adds or removes fit points from the image
@@ -140,10 +141,10 @@ class Experiment:
             layer (int): desired layer to make current
 
         """
-
-        if self.no_stacks>1 and layer>=0 and layer<self.no_stacks:
+         
+        if layer>=0 and layer<self.no_stacks:
             self.cellimage.seek(layer)
-            self.cellimagematrix = self.get_intensities(self.cellimage)
+            self.cellimagematrix = self.cellimage.load()
             self.current_layer = layer
             
         else:
@@ -158,6 +159,8 @@ class App:
         Args:
             root (Tkinter.Tk instance): Tk instance for drawing GUI
         """
+
+        self.root = root
 
         self.frame = Frame(root,width=60, height=512)
         self.frame.grid(row=0,column=0,padx=10)                  
@@ -229,7 +232,7 @@ class App:
            self.line_scan_labels[i].append(Label(self.frame,text=self.line_scan_labels[i][0]))
            self.line_scan_labels[i][1].grid(row=50+i,column=0)
         
-        self.copylinescanbutton = Button(self.frame, text="Copy to all",command = self.copy_linescan_parameters,width=7)
+        self.copylinescanbutton = Button(self.frame, text="Copy to all",command = self.copy_linescan_parameters,width=6)
         self.copylinescanbutton.grid(row = 50,column=2)
         
         self.linescanbutton = Button(self.frame, text="Linescan",command = self.linescan,width=15)
@@ -303,18 +306,18 @@ class App:
         
             self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
             self.hr1.grid(row=i-1,columnspan=2,pady =2)
-                  
-                
-        self.display = Canvas(root, width=512, height=512, background="black",bd=-1)       
-        self.display.bind("<Button-1>", self.add_fit_points)
-        self.display.bind("<Button-2>", self.remove_fit_points)
-        self.display.grid(row=0,column=2)
         
         self.cell = Experiment("./startupscreen.tif")
 
+        self.display = Canvas(root, width=self.cell.size_x, height=self.cell.size_y, background="black",bd=-1)
+        self.display.bind("<Button-1>", self.add_fit_points)
+        self.display.bind("<Button-2>", self.remove_fit_points)
+        self.display.grid(row=0,column=2)
+
         self.image_canvas = ImageTk.PhotoImage(self.cell.cellimage)
-        self.display.create_image((self.cell.size_x/2,self.cell.size_y/2),image=self.image_canvas) 
-        
+        # self.display.create_image((self.cell.size_x/2,self.cell.size_y/2),image=self.image_canvas)
+        self.display.create_image((0,0),image=self.image_canvas,anchor="nw")
+
         self.frame.bind_all("<Down>", self.down)
         self.frame.bind_all("<Left>", self.left)
         self.frame.bind_all("<Right>",self.right)
@@ -651,12 +654,11 @@ class App:
        
         layers = self.generate_framelist()
 
-
         #loops through the layers to be processed and performs the automated fit point selection
         for layer in layers:
-
+             
             self.cell.seek(layer)
-
+            
             current_modes  = self.segmentmodes.get()
             self.segmentmodes.delete(0,END)
             self.segmentmodes.insert(0,"4")
@@ -766,7 +768,8 @@ class App:
         #displays image
         if self.image_toggle.get() == 1:
             self.image_canvas = ImageTk.PhotoImage(self.cell.cellimage)
-            self.display.create_image((self.cell.size_x/2,self.cell.size_y/2),image=self.image_canvas)
+            # self.display.create_image((self.cell.size_x/2,self.cell.size_y/2),image=self.image_canvas)
+            self.display.create_image((0,0),image=self.image_canvas,anchor="nw")
 
         #displays fit points
         if self.fit_points_toggle.get() == 1:
@@ -809,7 +812,10 @@ class App:
 
         image_file = askopenfilename(filetypes=[("tif", "*.tif")], initialdir=self.cell.directory)
         self.cell = Experiment(image_file)
-      
+
+        #adjusts the display to match the cell size
+        self.display.config(width=self.cell.size_x, height=self.cell.size_y)
+
         outer = self.cell.linescan_pars[self.cell.current_layer][2]
         inner = self.cell.linescan_pars[self.cell.current_layer][3]
         phistart = self.cell.linescan_pars[self.cell.current_layer][0]
@@ -876,6 +882,10 @@ class App:
             phi = [] #zeros(no_fit_points)
             x   = [] #zeros(no_fit_points)
             y   = [] #zeros(no_fit_points)
+
+            # gets the center position of the fit points and uses that for the fit (instead of the middle of the frame)
+            center_x = np.mean(np.array(self.cell.fit_points[self.cell.current_layer])[:,0])
+            center_y = np.mean(np.array(self.cell.fit_points[self.cell.current_layer])[:,1])
                      
             for i in range(0,no_fit_points,1):
                            
@@ -887,7 +897,12 @@ class App:
 
                 #for j in range(0,self.cell.cellimage.getpixel((i0,j0)),1):
 
-                phi.append(math.atan2(float(256-yi),float(256-xi)))
+                #fits assuming center in the middle of the frame
+                # phi.append(math.atan2(float(self.cell.size_y/2-yi),float(self.cell.size_x/2-xi)))
+
+                # fits assuming center as the center of the fit points
+                phi.append(math.atan2(float(center_y - yi), float(center_x - xi)))
+
                 x.append(xi)
                 y.append(yi)
 
@@ -1197,6 +1212,7 @@ def main():
 
     # master = Tk() #moved this up to the imports
     master.resizable(width=0, height=0)
+    # master.resizable(True, True)
     master.title(string=sys.argv[0][:-3].split("/")[-1])
     app = App(master)
     mainloop()
