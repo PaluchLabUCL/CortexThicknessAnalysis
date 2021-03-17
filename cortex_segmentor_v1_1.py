@@ -160,10 +160,8 @@ class App:
             root (Tkinter.Tk instance): Tk instance for drawing GUI
         """
 
-        self.root = root
-
-        self.frame = Frame(root,width=60, height=512)
-        self.frame.grid(row=0,column=0,padx=10)                  
+        self.frame = Frame(root, width=60, height=512,borderwidth=10)
+        self.frame.grid(row=0,column=0,padx=10,pady=10,ipadx=10,ipady=10)
 
         self.openbutton = Button(self.frame, text="Open file",command = self.openfile,width=15)
         self.openbutton.grid(row=0,column=0)
@@ -258,8 +256,8 @@ class App:
         self.segmentmodes.insert(0,"10")
         self.segmentmodes.grid(row=40,column=1)
         
-        self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
-        self.hr1.grid(row=43,columnspan=2,pady =2)
+        # self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
+        # self.hr1.grid(row=43,columnspan=2,pady =2)
         
         self.copysegmenationentry = Entry(self.frame,bg="white",width=10)
         self.copysegmenationentry.insert(0,"10")
@@ -289,8 +287,8 @@ class App:
                                             "All from entry","Every second from entry")
         self.analyzewhatchoice.grid(row=26,column=2)
 
-        self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
-        self.hr1.grid(row=25,columnspan=2,pady =2)
+        # self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
+        # self.hr1.grid(row=25,columnspan=2,pady =2)
         
         self.resetfitpointsbutton = Button(self.frame, text="Reset Fitpoints", relief="groove",command=self.resetfitpoints,width=15)
         self.resetfitpointsbutton.grid(row=65,column=2)
@@ -302,10 +300,9 @@ class App:
         self.savebutton.grid(row=70,column=1)
             
         
-        for i in range(10,80,10):
-        
-            self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
-            self.hr1.grid(row=i-1,columnspan=2,pady =2)
+        # for i in range(10,80,10):
+        #     self.hr1 = Canvas(self.frame,height=3,width=200,bd=-2)
+        #     self.hr1.grid(row=i-1,columnspan=2,pady =2)
         
         self.cell = Experiment("./startupscreen.tif")
 
@@ -321,6 +318,8 @@ class App:
         self.frame.bind_all("<Down>", self.down)
         self.frame.bind_all("<Left>", self.left)
         self.frame.bind_all("<Right>",self.right)
+
+
 
     def resetfitpoints(self):
         """Resets (deletes) all current fit points"""
@@ -801,9 +800,9 @@ class App:
             except:
                 pass
          
-        self.display.create_text((20,20),text = "Layer %i/%i"%(self.cell.current_layer,self.cell.no_stacks),fill="white",anchor="w")
-        self.display.create_text((256,500),text = "%s"%self.cell.filename.split("/")[-1],fill="white")
-        self.display.create_text((256,480),text = "%s"%self.cell.segmentation,fill="white")
+        self.display.create_text((20,20),text = "Layer %i/%i"%(self.cell.current_layer+1,self.cell.no_stacks),fill="white",anchor="w")
+        self.display.create_text((self.cell.size_x/2,self.cell.size_y-10),text = "%s"%self.cell.filename.split("/")[-1],fill="white")
+        # self.display.create_text((256,480),text = "%s"%self.cell.segmentation,fill="white")
         #self.display()
         self.display.update_idletasks()
 
@@ -813,7 +812,7 @@ class App:
         image_file = askopenfilename(filetypes=[("tif", "*.tif")], initialdir=self.cell.directory)
         self.cell = Experiment(image_file)
 
-        #adjusts the display to match the cell size
+        self.image_canvas = ImageTk.PhotoImage(self.cell.cellimage)
         self.display.config(width=self.cell.size_x, height=self.cell.size_y)
 
         outer = self.cell.linescan_pars[self.cell.current_layer][2]
@@ -1030,7 +1029,9 @@ class App:
                         self.cell.outline_pixel_list[self.cell.current_layer].append([icurrent,jcurrent,PHI])
                         icurrent = i
                         jcurrent = j
-               
+
+                # print(self.cell.outline_pixel_list)
+
                 self.draw()
                 self.display.update_idletasks()
 
@@ -1157,7 +1158,8 @@ class App:
                         for j in np.arange(0,inner,0.1):
                             self.display.create_rectangle([np.floor(outlinex-j*normal_i),np.floor(outliney-j*normal_j),np.floor(outlinex-j*normal_i),np.floor(outliney-j*normal_j)],fill="yellow",width=0)
                         self.display.update_idletasks()
-               
+                        print("Getting Linescans" + "." * int(i/20))
+
             if int(self.linescanimage_toggle.get())==1:
                 unrolled_image.show()
                
@@ -1211,8 +1213,9 @@ def main():
     """Starts the program by opening an application window with a default start image"""
 
     # master = Tk() #moved this up to the imports
-    master.resizable(width=0, height=0)
-    # master.resizable(True, True)
+    # master.resizable(width=0, height=0)
+    master.geometry("1100x550")
+    master.resizable(True, True)
     master.title(string=sys.argv[0][:-3].split("/")[-1])
     app = App(master)
     mainloop()
